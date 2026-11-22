@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kareem's Flight Plan</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one column "flight plan" — alert strip, counters, urgent + Chevening side by side, full-width timeline, then the ledger table. */
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --ink:#111723; --ink-2:#4a5262; --ink-3:#7a8191; --rule:#dfe3ea; --rule-2:#eef0f4;
+  --accent:#1c5cab; --accent-soft:#e3edfb; --today:#d83a3a;
+  --good:#0f7a3a; --good-soft:#e2f4e8; --warn:#9a6400; --warn-soft:#fdf1d6; --serious:#c2410c; --serious-soft:#fde6da; --crit:#b42323; --crit-soft:#fbe3e3;
+  --muted-soft:#eef0f3;
+  --s-uk:#2a78d6; --s-france:#eb6834; --s-spain:#1baf7a; --s-jobs:#eda100; --s-phd:#e87ba4; --s-other:#6250d6;
+  --f-display:"Archivo","Segoe UI",system-ui,sans-serif; --f-body:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12151b; --panel:#1a1e26; --ink:#eef1f6; --ink-2:#b9c0cc; --ink-3:#8a92a1; --rule:#2c323d; --rule-2:#232832;
+  --accent:#6da7ec; --accent-soft:#1d2c44; --today:#ff6b6b;
+  --good:#4cc47a; --good-soft:#163222; --warn:#f0b43c; --warn-soft:#3a2d12; --serious:#ff8a4c; --serious-soft:#3d2216; --crit:#ff7676; --crit-soft:#3d1a1a;
+  --muted-soft:#242933;
+  --s-uk:#3987e5; --s-france:#d95926; --s-spain:#199e70; --s-jobs:#c98500; --s-phd:#d55181; --s-other:#9085e9; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12151b; --panel:#1a1e26; --ink:#eef1f6; --ink-2:#b9c0cc; --ink-3:#8a92a1; --rule:#2c323d; --rule-2:#232832;
+  --accent:#6da7ec; --accent-soft:#1d2c44; --today:#ff6b6b;
+  --good:#4cc47a; --good-soft:#163222; --warn:#f0b43c; --warn-soft:#3a2d12; --serious:#ff8a4c; --serious-soft:#3d2216; --crit:#ff7676; --crit-soft:#3d1a1a;
+  --muted-soft:#242933;
+  --s-uk:#3987e5; --s-france:#d95926; --s-spain:#199e70; --s-jobs:#c98500; --s-phd:#d55181; --s-other:#9085e9; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.5;margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:18px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:1.75rem;font-weight:700}
+h2{font-size:1.05rem;font-weight:600}
+.eyebrow{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--ink-3)}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px}
+header p{margin:4px 0 0;color:var(--ink-2);max-width:68ch}
+.stamp{text-align:right;font-family:var(--f-mono);font-size:.78rem;color:var(--ink-2)}
+.stamp b{color:var(--ink);font-weight:600}
+.panel{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:16px;min-width:0}
+.panel-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.alert{display:flex;gap:14px;align-items:center;flex-wrap:wrap;background:var(--crit-soft);border:1px solid color-mix(in srgb,var(--crit) 35%,transparent);border-radius:10px;padding:12px 16px}
+.alert .tm{font-family:var(--f-mono);font-weight:600;font-size:1.3rem;color:var(--crit);min-width:5ch}
+.alert .txt{flex:1 1 320px;min-width:0}
+.alert .txt b{display:block}
+.alert .txt span{color:var(--ink-2)}
+.counters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.counter{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:10px 14px}
+.counter .n{font-family:var(--f-mono);font-size:1.6rem;font-weight:600;line-height:1.2}
+.counter .l{font-size:.8rem;color:var(--ink-2)}
+.filters{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.filters .lbl{margin-right:4px}
+.chipbtn{font:inherit;font-size:.82rem;border:1px solid var(--rule);background:var(--panel);color:var(--ink);border-radius:999px;padding:4px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.chipbtn:hover{border-color:var(--ink-3)}
+.chipbtn[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chipbtn:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sw{width:9px;height:9px;border-radius:2px;display:inline-block;flex:none}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+.urgent{list-style:none;margin:0;padding:0;display:grid}
+.urgent li{display:grid;grid-template-columns:5.5ch minmax(0,1fr);gap:12px;padding:8px 0;border-top:1px solid var(--rule-2)}
+.urgent li:first-child{border-top:0}
+.urgent .tm{font-family:var(--f-mono);font-weight:600;font-size:.95rem}
+.urgent .tm.hot{color:var(--crit)}
+.urgent .tm.past{color:var(--ink-3)}
+.urgent .t{font-weight:500}
+.urgent .s{font-size:.82rem;color:var(--ink-2)}
+.sub{margin:14px 0 4px;font-size:.78rem}
+.chain{list-style:none;margin:0;padding:0;position:relative}
+.chain li{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:10px;align-items:start;padding:6px 0;position:relative}
+.chain li::before{content:"";position:absolute;left:8px;top:22px;bottom:-8px;width:2px;background:var(--rule)}
+.chain li:last-child::before{display:none}
+.chain .dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--s-uk);background:var(--panel);margin-top:2px;z-index:1}
+.chain li.done .dot{background:var(--s-uk)}
+.chain li.next .dot{box-shadow:0 0 0 4px var(--accent-soft)}
+.chain .when{font-family:var(--f-mono);font-size:.8rem;color:var(--ink-2);text-align:right;white-space:nowrap}
+.chain .what{font-weight:500}
+.chain .note{display:block;font-size:.78rem;color:var(--ink-3);font-weight:400}
+.choices{margin:6px 0 0;padding-left:1.4em;display:grid;gap:2px}
+.plan{font-size:.85rem;color:var(--ink-2);margin:10px 0 0}
+.est{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.04em;border:1px dashed var(--ink-3);color:var(--ink-2);border-radius:4px;padding:0 4px;margin-left:6px;white-space:nowrap;vertical-align:1px}
+.tl-scroll{overflow-x:auto;position:relative;-webkit-overflow-scrolling:touch}
+.tl-scroll svg{display:block}
+.tl-legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.78rem;color:var(--ink-2);margin-top:8px;align-items:center}
+.tl-legend svg{vertical-align:middle;margin-right:4px}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);font-size:.8rem;border-radius:6px;padding:7px 10px;max-width:260px;z-index:5;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.tip b{display:block}
+.tip .mono{opacity:.85}
+.mk{cursor:pointer}
+.mk:focus{outline:none}
+.mk:focus-visible .hit{stroke:var(--accent);stroke-width:2}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+select,input[type="search"]{font:inherit;font-size:.85rem;background:var(--panel);color:var(--ink);border:1px solid var(--rule);border-radius:6px;padding:5px 8px}
+input[type="search"]{min-width:0;width:200px;max-width:100%}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.86rem}
+th{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);text-align:left;font-weight:600;padding:8px 10px;border-bottom:1px solid var(--rule)}
+td{padding:9px 10px;border-bottom:1px solid var(--rule-2);vertical-align:top}
+td.name b{font-weight:600;display:block}
+td.name .note{color:var(--ink-2);font-size:.8rem}
+table.apps{table-layout:fixed;min-width:900px}
+td.date .tmn{white-space:normal}
+td.date .tmn{display:block;font-family:var(--f-mono);font-size:.78rem;color:var(--ink-2)}
+td.date .tmn.hot{color:var(--crit);font-weight:600}
+td code,td a.file{font-family:var(--f-mono);font-size:.74rem;color:var(--accent);word-break:break-all}
+tr.dim td{color:var(--ink-3)}
+tr.dim td.name b{text-decoration:line-through;text-decoration-color:var(--ink-3)}
+.trk{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.st{display:inline-flex;align-items:center;gap:5px;font-size:.76rem;font-weight:500;border-radius:999px;padding:2px 9px;white-space:nowrap;border:1px solid transparent}
+td .st{white-space:normal}
+.st i{font-style:normal;font-family:var(--f-mono);font-weight:600}
+.st-interview{background:var(--good-soft);color:var(--good)}
+.st-applied{background:var(--accent-soft);color:var(--accent)}
+.st-unconfirmed,.st-drafted{background:var(--warn-soft);color:var(--warn)}
+.st-todo{background:var(--serious-soft);color:var(--serious)}
+.st-preparing{border-color:var(--accent);color:var(--accent)}
+.st-planned,.st-open,.st-goal{border-color:var(--rule);color:var(--ink-2)}
+.st-closed,.st-dropped{background:var(--muted-soft);color:var(--ink-3)}
+.st-rejected{background:var(--crit-soft);color:var(--crit)}
+details summary{cursor:pointer;font-family:var(--f-display);font-weight:600}
+.how{color:var(--ink-2);font-size:.86rem;max-width:75ch}
+.how code{font-family:var(--f-mono);font-size:.8rem;background:var(--rule-2);padding:1px 5px;border-radius:4px}
+.empty{color:var(--ink-3);font-size:.85rem;padding:6px 0}
+@media (max-width:860px){.two{grid-template-columns:minmax(0,1fr)}.counters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:720px){
+  table.apps thead{display:none}
+  table.apps{min-width:0}
+  table.apps colgroup{display:none}
+  table.apps,table.apps tbody,table.apps tr,table.apps td{display:block;width:100%}
+  table.apps tr{border-bottom:1px solid var(--rule);padding:10px 0}
+  table.apps td{border:0;padding:3px 0}
+  table.apps td[data-k]::before{content:attr(data-k);font-family:var(--f-mono);font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);display:block}
+  h1{font-size:1.4rem}
+  .stamp{text-align:left}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Applications · plans · deadlines</div>
+      <h1>Kareem's Flight Plan</h1>
+      <p id="goal"></p>
+    </div>
+    <div class="stamp">Today <b id="today"></b><br>Data updated <b id="updated"></b></div>
+  </header>
+
+  <div id="alerts" style="display:grid;gap:10px"></div>
+
+  <div class="counters" id="counters"></div>
+
+  <div class="filters" role="group" aria-label="Filter by track">
+    <span class="eyebrow lbl">Track</span>
+    <span id="trackFilters" class="filters"></span>
+  </div>
+
+  <div class="two">
+    <section class="panel" aria-labelledby="h-urgent">
+      <div class="panel-head"><h2 id="h-urgent">Next 14 days</h2><span class="eyebrow">T−days from today</span></div>
+      <ul class="urgent" id="urgent"></ul>
+      <div class="eyebrow sub">Passed in the last 7 days, check status</div>
+      <ul class="urgent" id="recent"></ul>
+      <div class="eyebrow sub">Waiting on your confirmation</div>
+      <ul class="urgent" id="confirm"></ul>
+    </section>
+
+    <section class="panel" aria-labelledby="h-chev">
+      <div class="panel-head"><h2 id="h-chev">Chevening chain</h2><span class="eyebrow">Submitted 06.10.2026</span></div>
+      <ol class="chain" id="chain"></ol>
+      <div class="eyebrow sub">Locked course choices</div>
+      <ol class="choices" id="choices"></ol>
+      <p class="plan" id="chevPlan"></p>
+    </section>
+  </div>
+
+  <section class="panel" aria-labelledby="h-tl">
+    <div class="panel-head">
+      <h2 id="h-tl">Roadmap</h2>
+      <div class="toolbar">
+        <button class="chipbtn" id="rangeBtn" aria-pressed="false">Extend to Dec 2027</button>
+      </div>
+    </div>
+    <div class="tl-scroll" id="tlScroll"><div class="tip" id="tip" hidden></div></div>
+    <div class="tl-legend" id="tlLegend"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-apps">
+    <div class="panel-head">
+      <h2 id="h-apps">Every application <span class="muted mono" id="appCount"></span></h2>
+      <div class="toolbar">
+        <label class="eyebrow" for="statusSel">Status</label>
+        <select id="statusSel"></select>
+        <label class="eyebrow" for="sortSel">Sort</label>
+        <select id="sortSel"><option value="date">Next date</option><option value="status">Status</option><option value="track">Track</option></select>
+        <input type="search" id="q" placeholder="Search" aria-label="Search applications">
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table class="apps">
+        <colgroup><col style="width:23%"><col style="width:11%"><col style="width:14%"><col style="width:14%"><col style="width:20%"><col style="width:8%"><col style="width:10%"></colgroup>
+        <thead><tr><th>Opportunity</th><th>Track</th><th>Status</th><th>Key date</th><th>Next action</th><th>Odds</th><th>File</th></tr></thead>
+        <tbody id="appRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <details>
+      <summary>All dates as a table</summary>
+      <div class="tbl-wrap" style="margin-top:10px">
+        <table><thead><tr><th>Date</th><th>T−</th><th>Event</th><th>Track</th><th>Type</th><th>Certainty</th></tr></thead><tbody id="evRows"></tbody></table>
+      </div>
+    </details>
+  </section>
+
+  <section class="how">
+    <h2 style="margin-bottom:6px">Keeping it current</h2>
+    <p>All content lives in <code>tracker/data.json</code> in the project folder. To refresh, ask Claude in the project: <i>"Update my tracker: LMFA interview done, Cambridge fee waiver was submitted."</i> Claude edits <code>data.json</code>, runs <code>python3 tracker/build.py</code> and republishes this page. Dates marked <span class="est">EST</span> are estimates or unverified. Day counters recompute every time you open the page. See <code>tracker/README.md</code>.</p>
+  </section>
+</div>
+
+<script>window.TRACKER_DATA = {"updated": "2026-11-22", "owner": "Kareem A. Eldesouky", "goal": "Stanford PhD, Fall 2028 cohort (applications ~Dec 2027). Every option below is judged by whether it strengthens that application.", "pinned": [{"date": "2026-11-23", "title": "Eiffel nomination via Sorbonne M2 Fluid Mechanics: internal deadline", "detail": "Send the file to the science-faculty Eiffel referent, the referent (email in private notes). No record yet that the file was sent.", "file": ""}], "tracks": [{"id": "uk", "label": "UK"}, {"id": "france", "label": "France"}, {"id": "spain", "label": "Spain"}, {"id": "jobs", "label": "Internships & jobs"}, {"id": "phd", "label": "PhD"}, {"id": "other", "label": "Skills & admin"}], "statuses": {"interview": "Interview", "applied": "Applied", "unconfirmed": "Sent? unconfirmed", "drafted": "Drafted, not sent", "preparing": "Preparing", "todo": "To do, nothing recorded", "planned": "Planned later", "open": "Evaluated, no decision", "goal": "Long-term goal", "closed": "Closed, missed", "dropped": "Dropped / not applying", "rejected": "Rejected"}, "applications": [{"id": "chevening", "name": "Chevening Scholarship 2027/28", "track": "uk", "status": "applied", "statusNote": "Submitted 06.10.2026 (ID 1575029). Awaiting interview invite.", "date": "2027-02-15", "dateLabel": "Interview invites ~mid-Feb", "est": true, "next": "Zero-cost prep: referees on notice, English test validity, scanned documents. Decide Chevening vs Stanford 2028 before interviews (2-year return rule).", "odds": "", "file": ""}, {"id": "imperial", "name": "Imperial MSc Adv. Computational Methods (Aeronautics, Flow Mgmt & FSI)", "track": "uk", "status": "planned", "statusNote": "Chevening choice 1. Will apply only after the Chevening invite. Admissions inquiry email sent 22.11.2026, reply pending.", "date": "2027-03-10", "dateLabel": "Round 3 closes", "est": false, "next": "Wait for admissions reply (R3/R4 availability, 1 Mar scholarship rule, £80 fee waiver). Apply by 01.03.2027 if possible, no later than 10.03.2027.", "odds": "", "file": ""}, {"id": "cranfield", "name": "Cranfield MSc Thermal Power & Propulsion", "track": "uk", "status": "planned", "statusNote": "Chevening choice 2. Apply after the interview invite (22.11 decision).", "date": "2027-03-10", "dateLabel": "Target: apply after invite", "est": true, "next": "Check Cranfield deadline and ATAS rules before Feb.", "odds": "", "file": ""}, {"id": "manchester-msc", "name": "Manchester MSc Aerospace Engineering", "track": "uk", "status": "planned", "statusNote": "Chevening choice 3. Apply after the interview invite (22.11 decision).", "date": "2027-03-10", "dateLabel": "Target: apply after invite", "est": true, "next": "Check Manchester deadline before Feb.", "odds": "", "file": ""}, {"id": "cambridge", "name": "Cambridge MPhil Scientific Computing + Mastercard Foundation (and Gates)", "track": "uk", "status": "preparing", "statusNote": "Mastercard fee-waiver form was due 20.11.2026: submission not recorded.", "date": "2027-01-06", "dateLabel": "Course funding deadline", "est": false, "next": "Confirm whether the fee-waiver form went in. Line up references early: they must be in by 06.01.2027.", "odds": "", "file": ""}, {"id": "oxford-wht", "name": "Oxford MSc MMSC + Weidenfeld-Hoffmann", "track": "uk", "status": "open", "statusNote": "Low odds; needs IELTS retake (higher level).", "date": "2027-01-15", "dateLabel": "January scholarship deadline (date unverified)", "est": true, "next": "Only pursue if IELTS retake fits. Check the exact January date on the course page.", "odds": "", "file": ""}, {"id": "siemens-527593", "name": "Siemens STAR-CCM+ CFD Solver Dev (job 527593, Cambridge UK)", "track": "jobs", "status": "applied", "statusNote": "Applied 05.11.2026.", "date": "", "dateLabel": "Rolling", "est": false, "next": "Wait for reply.", "odds": "", "file": ""}, {"id": "siemens-508072", "name": "Siemens STAR-CCM+ CFD Software Engineer (job 508072, thermal/battery)", "track": "jobs", "status": "unconfirmed", "statusNote": "CV prepared 20.11.2026 for a LinkedIn message to the talent partner. Not confirmed sent.", "date": "", "dateLabel": "Rolling", "est": false, "next": "Send LinkedIn message with CV; ask about Feb-Jul 2027 thesis or remote option.", "odds": "", "file": ""}, {"id": "neworbit", "name": "NewOrbit Space Thermal Engineer (Reading UK)", "track": "jobs", "status": "open", "statusNote": "Evaluated 04.11.2026; no application recorded.", "date": "2026-11-30", "dateLabel": "Closes 30.11, 02:00 Cairo", "est": false, "next": "Decide by 29.11 or let it go.", "odds": "", "file": ""}, {"id": "eiffel-sorbonne", "name": "Eiffel scholarship via Sorbonne M2 Fluid Mechanics", "track": "france", "status": "todo", "statusNote": "Recommended single Eiffel pick. No record of the file being sent.", "date": "2026-11-23", "dateLabel": "Sorbonne internal deadline", "est": false, "next": "Email the file to the referent (email in private notes) today.", "odds": "", "file": ""}, {"id": "sorbonne-m2", "name": "Sorbonne M2 Fluid Mechanics admission (Études en France)", "track": "france", "status": "todo", "statusNote": "Plan: drop Cairo MSc only after a French M2 admission + funding.", "date": "2027-01-15", "dateLabel": "Campus France Egypt ~15.01", "est": true, "next": "Create Études en France account; email Prof. Zaleski about M2 entry.", "odds": "", "file": ""}, {"id": "ipparis-m2", "name": "IP Paris M2 Fluid Mechanics", "track": "france", "status": "open", "statusNote": "Backup English-taught M2.", "date": "2027-01-14", "dateLabel": "Session 1 closes", "est": true, "next": "Decide whether to add it as a second M2.", "odds": "", "file": ""}, {"id": "tahtawi", "name": "Rifaa El-Tahtawi M2 scholarship (French Embassy Egypt)", "track": "france", "status": "planned", "statusNote": "2027-28 call not published yet. Needs proof of an M2 application. Cannot be held with Eiffel.", "date": "2027-02-15", "dateLabel": "Deadline ~15.02 (last year's pattern)", "est": true, "next": "Early Dec: check ifegypte.com for the call.", "odds": "", "file": ""}, {"id": "lmfa", "name": "LMFA Lyon: RANS turbomachinery internship (REVCO2, SU2)", "track": "jobs", "status": "interview", "statusNote": "Applied 05.11.2026. Online interview 01.12.2026 with Giauque, Buisson, Corre. ~650 €/month, 6 months from April.", "date": "2026-12-01", "dateLabel": "Interview", "est": false, "next": "Finish ≤15-min slides; mock interview; confirm Cairo will sign the convention de stage.", "odds": "", "file": ""}, {"id": "pprime", "name": "Institut Pprime Poitiers: OpenFOAM obstacle internship", "track": "jobs", "status": "applied", "statusNote": "Applied 08.11.2026 (CV without freelance project).", "date": "", "dateLabel": "Rolling", "est": false, "next": "Wait for reply; follow up if silent by early Dec.", "odds": "", "file": ""}, {"id": "lille", "name": "LMFL Lille: ML-LES internship", "track": "jobs", "status": "unconfirmed", "statusNote": "Pack prepared late Oct. Whether it was sent is not recorded.", "date": "2026-12-31", "dateLabel": "Deadline (rolling review)", "est": false, "next": "Confirm whether it was sent.", "odds": "", "file": ""}, {"id": "irdl", "name": "IRDL Lorient: PCM thermal internship", "track": "jobs", "status": "drafted", "statusNote": "CV ready; motivation letter not written. Nothing sent.", "date": "", "dateLabel": "As soon as possible", "est": false, "next": "Decide; needs honest French level.", "odds": "", "file": ""}, {"id": "epfl-e3", "name": "EPFL E3 Summer Research 2027 (LAMD, LSMS, UNFOLD, HEAD)", "track": "jobs", "status": "unconfirmed", "statusNote": "Deadline was 01.11.2026. Sent status unconfirmed.", "date": "", "dateLabel": "Results date not recorded", "est": false, "next": "Confirm submission; check the portal for results.", "odds": "", "file": ""}, {"id": "comsol", "name": "COMSOL France Grenoble internship", "track": "jobs", "status": "rejected", "statusNote": "Rejected 09.11.2026.", "date": "", "dateLabel": "", "est": false, "next": "", "odds": "", "file": ""}, {"id": "opus", "name": "OPUS Aerospace propulsion intern", "track": "jobs", "status": "dropped", "statusNote": "Decided not to apply (09.11).", "date": "", "dateLabel": "", "est": false, "next": "", "odds": "", "file": ""}, {"id": "luxembourg", "name": "Univ. Luxembourg ML reacting flows internship", "track": "jobs", "status": "dropped", "statusNote": "Decided not to apply (06.11).", "date": "", "dateLabel": "", "est": false, "next": "", "odds": "", "file": ""}, {"id": "onera", "name": "ONERA DOTA decoy IR internship", "track": "jobs", "status": "open", "statusNote": "One short email suggested; defence/nationality barrier.", "date": "", "dateLabel": "Start Feb-Mar 2027", "est": false, "next": "Optional email to ask about foreign nationals.", "odds": "", "file": ""}, {"id": "justq", "name": "justQ quantum CFD internship (remote, unpaid)", "track": "jobs", "status": "drafted", "statusNote": "Nothing sent.", "date": "", "dateLabel": "", "est": false, "next": "Low priority.", "odds": "", "file": ""}, {"id": "arcelormittal", "name": "ArcelorMittal supersonic O2 injection CFD internship", "track": "jobs", "status": "unconfirmed", "statusNote": "Pack and email drafted; submission not recorded.", "date": "", "dateLabel": "", "est": false, "next": "Confirm status.", "odds": "", "file": ""}, {"id": "cispa", "name": "CISPA Summer Research 2027", "track": "jobs", "status": "open", "statusNote": "Weak topic fit (security ML). No application recorded.", "date": "2026-11-30", "dateLabel": "Closes 30.11 (AoE)", "est": false, "next": "Likely skip.", "odds": "", "file": ""}, {"id": "uc3m", "name": "UC3M Master in Aerospace Science & Technology + Boeing grant", "track": "spain", "status": "preparing", "statusNote": "Discetti and Ianiro replied (thesis only after admission, no funding). Email to Prof. Merino (admissions) planned.", "date": "2026-12-01", "dateLabel": "Period 1 opens ~01.12 (runs to ~31.01)", "est": true, "next": "Email Prof. Merino; legalise Mansoura documents now.", "odds": "", "file": ""}, {"id": "traton", "name": "TRATON spray CFD master thesis (Req 35324, Södertälje)", "track": "jobs", "status": "drafted", "statusNote": "Pack drafted 19.11.2026, not submitted. Rolling interviews.", "date": "", "dateLabel": "Rolling", "est": false, "next": "Submit soon (rolling); then send supervisor email.", "odds": "", "file": ""}, {"id": "scania", "name": "Scania e-turbo master thesis (34893)", "track": "jobs", "status": "closed", "statusNote": "Posting closed 20.11.2026; not applied.", "date": "", "dateLabel": "", "est": false, "next": "", "odds": "", "file": ""}, {"id": "siemens-energy", "name": "Siemens Energy Finspång theses (305915 diffuser, 305914 blade tip, 305484, 305520)", "track": "jobs", "status": "unconfirmed", "statusNote": "Packs drafted 31.10 and 10.11. Submission not recorded.", "date": "", "dateLabel": "Selection ongoing", "est": false, "next": "Confirm whether any were submitted.", "odds": "", "file": ""}, {"id": "su2", "name": "SU2 Foundation contractor role", "track": "jobs", "status": "applied", "statusNote": "Applied 06.11.2026.", "date": "2026-11-27", "dateLabel": "Posting deadline", "est": false, "next": "Wait; a first SU2 PR would strengthen it.", "odds": "", "file": ""}, {"id": "lava", "name": "Lava Consultants CFD role", "track": "jobs", "status": "applied", "statusNote": "Applied 06.11.2026.", "date": "", "dateLabel": "", "est": false, "next": "Wait for reply.", "odds": "", "file": ""}, {"id": "ria-gulf", "name": "RIA-GULF CFD Specialist (Cairo)", "track": "jobs", "status": "drafted", "statusNote": "CV + email drafted 16.11.2026, not sent.", "date": "", "dateLabel": "", "est": false, "next": "Send, asking about a junior CFD role as fallback.", "odds": "", "file": ""}, {"id": "nus-33605", "name": "NUS Temasek Labs Associate Scientist (Req 33605)", "track": "jobs", "status": "applied", "statusNote": "Sent to Dr Li 18.11.2026.", "date": "", "dateLabel": "", "est": false, "next": "Wait for reply.", "odds": "", "file": ""}, {"id": "nvidia", "name": "NVIDIA Differentiable Simulation Research Intern, Summer 2027", "track": "jobs", "status": "open", "statusNote": "Needs PhD-student status; use as a skills roadmap.", "date": "", "dateLabel": "", "est": false, "next": "Low-effort shot only.", "odds": "", "file": ""}, {"id": "nasr", "name": "Dr Mahmoud Nasr (NUS): co-supervised Cairo MSc thesis on gust-load alleviation", "track": "phd", "status": "unconfirmed", "statusNote": "Thesis topic decided 18.11. LinkedIn reply drafted; not confirmed sent.", "date": "", "dateLabel": "6-month 2D plan, target AIAA SciTech", "est": false, "next": "Send reply to Nasr; share proposal with Guaily and Madbouli.", "odds": "", "file": ""}, {"id": "georgia-tech", "name": "Georgia Tech AE direct PhD, Fall 2027", "track": "phd", "status": "open", "statusNote": "Recommended if letters are feasible. No decision recorded.", "date": "2026-12-01", "dateLabel": "Funding deadline, 23:59 ET", "est": false, "next": "Decide now: submit by 01.12 so referees get requests early.", "odds": "", "file": ""}, {"id": "manchester-phd", "name": "Manchester PhD: physics-driven AI for data-centre cooling", "track": "phd", "status": "drafted", "statusNote": "EOI email + CV drafted 18.11.2026, not sent. Rolling shortlisting.", "date": "", "dateLabel": "Rolling", "est": false, "next": "Send EOI to Dr Keshmiri soon.", "odds": "", "file": ""}, {"id": "qub", "name": "QUB Rolls-Royce gas-path PhD", "track": "phd", "status": "open", "statusNote": "Provisional: funding likely UK/ROI-only. Posting text needed.", "date": "2026-11-28", "dateLabel": "Deadline ~28.11 (last cycle)", "est": true, "next": "Paste the posting text to confirm eligibility.", "odds": "", "file": ""}, {"id": "western", "name": "Western University MESc (Sagharichi)", "track": "phd", "status": "open", "statusNote": "Funded MESc; evaluated.", "date": "2027-02-10", "dateLabel": "Sept intake deadline", "est": false, "next": "Decide whether to apply.", "odds": "", "file": ""}, {"id": "carleton", "name": "Carleton ASME-Lab PhD/MASc", "track": "phd", "status": "open", "statusNote": "Rolling review.", "date": "", "dateLabel": "Rolling", "est": false, "next": "Optional.", "odds": "", "file": ""}, {"id": "eth-esop", "name": "ETH Zurich ESOP", "track": "uk", "status": "dropped", "statusNote": "Not applying: GRE required (15.11).", "date": "", "dateLabel": "", "est": false, "next": "", "odds": "", "file": ""}, {"id": "stanford", "name": "Stanford PhD (Alonso, Farhat; also Ihme, Iaccarino, Darve), Fall 2028", "track": "phd", "status": "goal", "statusNote": "End goal. Rejected last cycle.", "date": "2027-12-01", "dateLabel": "Application deadline ~01.12.2027", "est": true, "next": "Build visible output: SU2 PR, paper, strong letters.", "odds": "", "file": ""}, {"id": "tudelft", "name": "TU Delft online course fee waiver (Rotor & Wake Aerodynamics)", "track": "other", "status": "planned", "statusNote": "Route A, 100% fee, ~30 places.", "date": "2026-12-18", "dateLabel": "Window opens (to 10.01)", "est": false, "next": "Apply 18-20.12, not on the last day.", "odds": "", "file": ""}, {"id": "english", "name": "English test (IELTS) retake", "track": "other", "status": "planned", "statusNote": "Planned in ~2 weeks (said 22.11).", "date": "2026-12-06", "dateLabel": "~early Dec", "est": true, "next": "Book the test; needed for Imperial and Oxford.", "odds": "", "file": ""}], "events": [{"date": "2026-11-20", "title": "Mastercard fee-waiver form due", "track": "uk", "kind": "deadline", "est": false, "app": "cambridge"}, {"date": "2026-11-22", "title": "Imperial inquiry sent", "track": "uk", "kind": "milestone", "est": false, "app": "imperial"}, {"date": "2027-01-06", "title": "Cambridge funding deadline", "track": "uk", "kind": "deadline", "est": false, "app": "cambridge"}, {"date": "2027-01-15", "title": "Oxford scholarship round", "track": "uk", "kind": "deadline", "est": true, "app": "oxford-wht"}, {"date": "2027-02-15", "title": "Chevening invites", "track": "uk", "kind": "decision", "est": true, "app": "chevening", "chain": 1}, {"date": "2027-02-15", "end": "2027-03-10", "title": "Apply Imperial, Cranfield, Manchester", "track": "uk", "kind": "range", "est": true, "app": "imperial"}, {"date": "2027-03-01", "title": "Imperial scholarship cut-off", "track": "uk", "kind": "deadline", "est": false, "app": "imperial", "chain": 2}, {"date": "2027-03-10", "title": "Imperial R3 closes", "track": "uk", "kind": "deadline", "est": false, "app": "imperial", "chain": 3}, {"date": "2027-03-01", "end": "2027-04-30", "title": "Chevening interviews", "track": "uk", "kind": "range", "est": true, "app": "chevening", "chain": 4}, {"date": "2027-04-28", "title": "Imperial R4 closes (backup)", "track": "uk", "kind": "deadline", "est": false, "app": "imperial"}, {"date": "2027-05-05", "title": "Imperial R3 decision", "track": "uk", "kind": "decision", "est": false, "app": "imperial", "chain": 5}, {"date": "2027-06-15", "title": "Chevening results", "track": "uk", "kind": "decision", "est": true, "app": "chevening", "chain": 6}, {"date": "2027-07-08", "title": "Unconditional UK offer due", "track": "uk", "kind": "deadline", "est": false, "app": "chevening", "chain": 7}, {"date": "2027-09-27", "title": "UK course start", "track": "uk", "kind": "milestone", "est": true, "app": "chevening"}, {"date": "2026-11-23", "title": "Eiffel: Sorbonne internal", "track": "france", "kind": "deadline", "est": false, "app": "eiffel-sorbonne"}, {"date": "2026-12-10", "title": "Tahtawi call expected", "track": "france", "kind": "milestone", "est": true, "app": "tahtawi"}, {"date": "2027-01-06", "title": "Eiffel files to Campus France", "track": "france", "kind": "milestone", "est": false, "app": "eiffel-sorbonne"}, {"date": "2027-01-14", "title": "IP Paris M2 session 1", "track": "france", "kind": "deadline", "est": true, "app": "ipparis-m2"}, {"date": "2027-01-15", "title": "Campus France Egypt", "track": "france", "kind": "deadline", "est": true, "app": "sorbonne-m2"}, {"date": "2027-02-15", "title": "Tahtawi deadline", "track": "france", "kind": "deadline", "est": true, "app": "tahtawi"}, {"date": "2027-03-05", "title": "Sorbonne M2 replies", "track": "france", "kind": "decision", "est": true, "app": "sorbonne-m2"}, {"date": "2027-04-12", "title": "Eiffel results", "track": "france", "kind": "decision", "est": false, "app": "eiffel-sorbonne"}, {"date": "2027-06-15", "title": "Tahtawi results", "track": "france", "kind": "decision", "est": true, "app": "tahtawi"}, {"date": "2027-06-15", "end": "2027-07-31", "title": "Decide on Cairo MSc", "track": "france", "kind": "range", "est": true, "app": "sorbonne-m2"}, {"date": "2026-12-01", "end": "2027-01-31", "title": "UC3M MAST period 1", "track": "spain", "kind": "range", "est": true, "app": "uc3m"}, {"date": "2027-03-01", "end": "2027-04-30", "title": "UC3M-Santander scholarship", "track": "spain", "kind": "range", "est": true, "app": "uc3m"}, {"date": "2027-09-06", "title": "MAST starts", "track": "spain", "kind": "milestone", "est": true, "app": "uc3m"}, {"date": "2026-11-27", "title": "SU2 posting closes", "track": "jobs", "kind": "deadline", "est": false, "app": "su2"}, {"date": "2026-11-30", "title": "NewOrbit + CISPA close", "track": "jobs", "kind": "deadline", "est": false, "app": "neworbit"}, {"date": "2026-12-01", "title": "LMFA interview", "track": "jobs", "kind": "milestone", "est": false, "app": "lmfa"}, {"date": "2026-12-31", "title": "Lille LMFL deadline", "track": "jobs", "kind": "deadline", "est": false, "app": "lille"}, {"date": "2027-02-01", "end": "2027-07-31", "title": "Internship window (Feb-Jul)", "track": "jobs", "kind": "range", "est": false, "app": "lmfa"}, {"date": "2027-04-01", "end": "2027-09-30", "title": "LMFA internship if offered", "track": "jobs", "kind": "range", "est": true, "app": "lmfa"}, {"date": "2026-11-28", "title": "QUB RR PhD", "track": "phd", "kind": "deadline", "est": true, "app": "qub"}, {"date": "2026-12-01", "title": "Georgia Tech funding deadline", "track": "phd", "kind": "deadline", "est": false, "app": "georgia-tech"}, {"date": "2027-02-10", "title": "Western MESc", "track": "phd", "kind": "deadline", "est": false, "app": "western"}, {"date": "2027-03-01", "title": "Georgia Tech final", "track": "phd", "kind": "deadline", "est": false, "app": "georgia-tech"}, {"date": "2027-10-06", "title": "Knight-Hennessy", "track": "phd", "kind": "deadline", "est": true, "app": "stanford"}, {"date": "2027-12-01", "title": "Stanford PhD deadline", "track": "phd", "kind": "deadline", "est": true, "app": "stanford"}, {"date": "2026-12-06", "title": "English test", "track": "other", "kind": "milestone", "est": true, "app": "english"}, {"date": "2026-12-18", "end": "2027-01-10", "title": "TU Delft fee waiver", "track": "other", "kind": "range", "est": false, "app": "tudelft"}], "chevening": {"choices": ["Imperial MSc Advanced Computational Methods for Aeronautics, Flow Management and FSI", "Cranfield MSc Thermal Power and Propulsion (Aerospace Propulsion option)", "Manchester MSc Aerospace Engineering"], "plan": "Apply to the three universities only after the Chevening interview invite (~mid-Feb 2027). Imperial by 01.03.2027 to count for the Aeronautics full-fee scholarship, and no later than Round 3 close on 10.03.2027 (decision by 05.05.2027). Round 4 (28.04, decision 01.07) is too tight for the 08.07 offer deadline. ATAS is needed after the offer.", "file": ""}};</script>
+<script>
+(function(){
+  "use strict";
+  var D = window.TRACKER_DATA;
+  var MS = 864e5;
+  var now = new Date(); var TODAY = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  var state = { track: "all", status: "all", sort: "date", q: "", longRange: false };
+  try { var saved = JSON.parse(localStorage.getItem("flightplan-ui") || "{}"); if (saved.track) state.track = saved.track; if (saved.longRange) state.longRange = true; } catch (e) {}
+  function save(){ try { localStorage.setItem("flightplan-ui", JSON.stringify({track: state.track, longRange: state.longRange})); } catch (e) {} }
+
+  function pd(s){ if(!s) return null; var p = s.split("-"); return new Date(+p[0], +p[1]-1, +p[2]); }
+  function fmt(s){ var d = pd(s); if(!d) return ""; return String(d.getDate()).padStart(2,"0")+"."+String(d.getMonth()+1).padStart(2,"0")+"."+d.getFullYear(); }
+  function days(s){ var d = pd(s); return d ? Math.round((d - TODAY)/MS) : null; }
+  function tm(n){ if(n===null) return "—"; if(n===0) return "Today"; return n>0 ? "T−"+n : (-n)+"d ago"; }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
+  var TR = {}; D.tracks.forEach(function(t){ TR[t.id] = t; });
+  var APP = {}; D.applications.forEach(function(a){ APP[a.id] = a; });
+  var ICON = {interview:"✓",applied:"↗",unconfirmed:"?",drafted:"✎",preparing:"◔",todo:"!",planned:"○",open:"◇",goal:"★",closed:"–",dropped:"×",rejected:"×"};
+  var ORDER = ["todo","interview","preparing","drafted","unconfirmed","applied","open","planned","goal","closed","dropped","rejected"];
+  var DIM = {closed:1,dropped:1,rejected:1};
+  function chip(st){ return '<span class="st st-'+st+'"><i aria-hidden="true">'+ICON[st]+'</i>'+esc(D.statuses[st]||st)+'</span>'; }
+  function trk(id){ return '<span class="trk"><span class="sw" style="background:var(--s-'+id+')"></span>'+esc(TR[id]?TR[id].label:id)+'</span>'; }
+  function estTag(e){ return e ? '<span class="est" title="Estimate or unverified date">EST</span>' : ''; }
+  function fileLink(f){ if(!f) return ""; if(location.protocol==="file:") return '<a class="file" href="../'+esc(f)+'">'+esc(f)+'</a>'; return '<code title="Path in the project folder">'+esc(f)+'</code>'; }
+  function inTrack(t){ return state.track==="all" || state.track===t; }
+
+  function renderStatic(){
+    document.getElementById("today").textContent = fmt(TODAY.getFullYear()+"-"+(TODAY.getMonth()+1)+"-"+TODAY.getDate());
+    document.getElementById("updated").textContent = fmt(D.updated);
+    document.getElementById("goal").textContent = D.goal;
+    var stale = days(D.updated);
+    if (stale !== null && stale < -10) document.getElementById("updated").insertAdjacentHTML("afterend", ' <span class="est">'+(-stale)+' days old</span>');
+    var al = document.getElementById("alerts"); al.innerHTML = "";
+    D.pinned.forEach(function(p){ var n = days(p.date); if (n === null || n < -1) return;
+      al.insertAdjacentHTML("beforeend", '<div class="alert" role="alert"><div class="tm">'+tm(n)+'</div><div class="txt"><b>'+esc(p.title)+' · '+fmt(p.date)+'</b><span>'+esc(p.detail)+'</span></div><div>'+fileLink(p.file)+'</div></div>'); });
+    var g = {active:0, you:0, later:0, closed:0};
+    D.applications.forEach(function(a){ var s=a.status; if(s==="interview"||s==="applied") g.active++; else if(s==="todo"||s==="drafted"||s==="unconfirmed"||s==="preparing") g.you++; else if(DIM[s]) g.closed++; else g.later++; });
+    document.getElementById("counters").innerHTML =
+      '<div class="counter"><div class="n">'+g.active+'</div><div class="l">Sent, waiting or interviewing</div></div>'+
+      '<div class="counter"><div class="n">'+g.you+'</div><div class="l">Waiting on you (to do, drafted, unconfirmed)</div></div>'+
+      '<div class="counter"><div class="n">'+g.later+'</div><div class="l">Planned or still deciding</div></div>'+
+      '<div class="counter"><div class="n">'+g.closed+'</div><div class="l">Closed, dropped or rejected</div></div>';
+    var tf = document.getElementById("trackFilters");
+    tf.innerHTML = '<button class="chipbtn" data-t="all">All</button>' + D.tracks.map(function(t){ return '<button class="chipbtn" data-t="'+t.id+'"><span class="sw" style="background:var(--s-'+t.id+')"></span>'+esc(t.label)+'</button>'; }).join("");
+    tf.addEventListener("click", function(e){ var b = e.target.closest("button"); if(!b) return; state.track = b.getAttribute("data-t"); save(); renderDynamic(); });
+    var ss = document.getElementById("statusSel");
+    ss.innerHTML = '<option value="all">All</option><option value="live">Hide closed / dropped</option>' + ORDER.map(function(s){ return '<option value="'+s+'">'+esc(D.statuses[s])+'</option>'; }).join("");
+    ss.value = "live"; state.status = "live";
+    ss.addEventListener("change", function(){ state.status = ss.value; renderTable(); });
+    document.getElementById("sortSel").addEventListener("change", function(e){ state.sort = e.target.value; renderTable(); });
+    document.getElementById("q").addEventListener("input", function(e){ state.q = e.target.value.toLowerCase(); renderTable(); });
+    var rb = document.getElementById("rangeBtn");
+    rb.addEventListener("click", function(){ state.longRange = !state.longRange; save(); renderTimeline(); });
+    var ch = D.chevening; document.getElementById("choices").innerHTML = ch.choices.map(function(c){ return "<li>"+esc(c)+"</li>"; }).join("");
+    document.getElementById("chevPlan").innerHTML = esc(ch.plan)+" "+fileLink(ch.file);
+    renderChain();
+    var ev = D.events.slice().sort(function(a,b){ return a.date<b.date?-1:1; });
+    document.getElementById("evRows").innerHTML = ev.map(function(e){ return '<tr><td class="mono">'+fmt(e.date)+(e.end?' – '+fmt(e.end):'')+'</td><td class="mono">'+tm(days(e.date))+'</td><td>'+esc(e.title)+'</td><td>'+trk(e.track)+'</td><td>'+e.kind+'</td><td>'+(e.est?'Estimate / unverified':'Confirmed')+'</td></tr>'; }).join("");
+  }
+
+  function renderChain(){
+    var steps = D.events.filter(function(e){ return e.chain; }).sort(function(a,b){ return a.date<b.date?-1:a.date>b.date?1:a.chain-b.chain; });
+    var nextFound = false;
+    document.getElementById("chain").innerHTML = steps.map(function(e){
+      var n = days(e.end || e.date), cls = "";
+      if (n < 0) cls = "done"; else if (!nextFound) { cls = "next"; nextFound = true; }
+      var a = APP[e.app];
+      return '<li class="'+cls+'"><span class="dot" aria-hidden="true"></span><span class="what">'+esc(e.title)+estTag(e.est)+'<span class="note">'+esc(a?a.name.split(" (")[0]:"")+'</span></span><span class="when">'+fmt(e.date)+(e.end?'–'+fmt(e.end).slice(0,5):'')+'<br>'+tm(days(e.date))+'</span></li>';
+    }).join("");
+  }
+
+  function renderUrgent(){
+    var items = [];
+    D.events.forEach(function(e){ if(!inTrack(e.track)) return; var n = days(e.date); if (n>=0 && n<=14) items.push({n:n, title:e.title, date:e.date, est:e.est, app:APP[e.app]}); });
+    D.applications.forEach(function(a){ if(!inTrack(a.track) || !a.date || DIM[a.status]) return; var n = days(a.date);
+      if (n>=0 && n<=14 && !items.some(function(i){ return i.date===a.date && i.app===a; })) items.push({n:n, title:a.dateLabel, date:a.date, est:a.est, app:a}); });
+    items.sort(function(x,y){ return x.n-y.n; });
+    var li = function(i, past){ return '<li><span class="tm '+(past?'past':(i.n<=3?'hot':''))+'">'+tm(i.n)+'</span><div><div class="t">'+esc(i.title)+estTag(i.est)+' <span class="mono muted">'+fmt(i.date)+'</span></div>'+(i.app?'<div class="s">'+esc(i.app.name)+' · '+chip(i.app.status)+'</div><div class="s">'+esc(i.app.next)+'</div>':'')+'</div></li>'; };
+    document.getElementById("urgent").innerHTML = items.length ? items.map(function(i){ return li(i,false); }).join("") : '<li class="empty">Nothing in the next 14 days for this track.</li>';
+    var rec = [];
+    D.events.forEach(function(e){ if(!inTrack(e.track) || e.kind!=="deadline") return; var n = days(e.date); var a = APP[e.app];
+      if (n<0 && n>=-7 && a && /todo|preparing|unconfirmed|drafted|open/.test(a.status)) rec.push({n:n, title:e.title, date:e.date, est:e.est, app:a}); });
+    document.getElementById("recent").innerHTML = rec.length ? rec.map(function(i){ return li(i,true); }).join("") : '<li class="empty">None.</li>';
+    var conf = D.applications.filter(function(a){ return inTrack(a.track) && a.status==="unconfirmed"; });
+    document.getElementById("confirm").innerHTML = conf.length ? conf.map(function(a){ return '<li><span class="tm past">?</span><div><div class="t">'+esc(a.name)+'</div><div class="s">'+esc(a.statusNote)+'</div></div></li>'; }).join("") : '<li class="empty">None.</li>';
+  }
+
+  function renderTable(){
+    var rows = D.applications.filter(function(a){
+      if(!inTrack(a.track)) return false;
+      if(state.status==="live" && DIM[a.status]) return false;
+      if(state.status!=="all" && state.status!=="live" && a.status!==state.status) return false;
+      if(state.q && (a.name+" "+a.statusNote+" "+a.next+" "+a.file).toLowerCase().indexOf(state.q)<0) return false;
+      return true; });
+    var key = function(a){ var n = days(a.date); return n===null ? 1e5 : (n<0 ? 2e5-n : n); };
+    rows.sort(function(x,y){
+      if(state.sort==="status") return ORDER.indexOf(x.status)-ORDER.indexOf(y.status) || key(x)-key(y);
+      if(state.sort==="track") return D.tracks.findIndex(function(t){return t.id===x.track;})-D.tracks.findIndex(function(t){return t.id===y.track;}) || key(x)-key(y);
+      return key(x)-key(y); });
+    document.getElementById("appCount").textContent = rows.length+" of "+D.applications.length;
+    document.getElementById("appRows").innerHTML = rows.length ? rows.map(function(a){
+      var n = days(a.date);
+      return '<tr class="'+(DIM[a.status]?'dim':'')+'"><td class="name"><b>'+esc(a.name)+'</b><span class="note">'+esc(a.statusNote)+'</span></td>'+
+        '<td data-k="Track">'+trk(a.track)+'</td><td data-k="Status">'+chip(a.status)+'</td>'+
+        '<td class="date" data-k="Key date">'+(a.date?'<span class="mono">'+fmt(a.date)+'</span>'+estTag(a.est)+'<span class="tmn '+(n>=0&&n<=7?'hot':'')+'">'+tm(n)+' · '+esc(a.dateLabel)+'</span>':'<span class="muted">'+esc(a.dateLabel||"—")+'</span>')+'</td>'+
+        '<td data-k="Next action">'+esc(a.next||"—")+'</td><td data-k="Odds" class="mono" style="font-size:.78rem">'+esc(a.odds||"—")+'</td><td data-k="File">'+fileLink(a.file)+'</td></tr>'; }).join("")
+      : '<tr><td colspan="7" class="empty">No applications match these filters.</td></tr>';
+  }
+
+  function renderTimeline(){
+    var box = document.getElementById("tlScroll"), tip = document.getElementById("tip");
+    document.getElementById("rangeBtn").setAttribute("aria-pressed", state.longRange ? "true" : "false");
+    var start = new Date(2026,10,1), end = state.longRange ? new Date(2028,0,1) : new Date(2027,9,1);
+    var W = Math.max(box.clientWidth || 900, 860), L = 132, R = 16, top = 34;
+    var x = function(d){ return L + (d - start)/(end - start)*(W - L - R); };
+    var cw = 6.3, rowH = 22, lanePad = 10;
+    var tracks = D.tracks.filter(function(t){ return inTrack(t.id); });
+    var lanes = [], y = top;
+    tracks.forEach(function(t){
+      var evs = D.events.filter(function(e){ var d = pd(e.date); return e.track===t.id && d < end && pd(e.end||e.date) >= start; }).sort(function(a,b){ return a.date<b.date?-1:1; });
+      var rows = []; // each row: last occupied x
+      var placed = evs.map(function(e){
+        var x0 = Math.max(x(pd(e.date)), L), x1 = e.end ? Math.min(x(pd(e.end)), W-R) : x0;
+        var labW = e.title.length*cw + (e.est?34:0) + 14;
+        var lx = e.end ? x0 : x0 + 9, ext = Math.max(lx + labW, x1) + 6;
+        var flip = !e.end && ext > W - R; if (flip) { lx = x0 - 9; }
+        var span0 = flip ? lx - labW : x0 - 8, span1 = flip ? x0 + 8 : ext;
+        var r = 0; while (rows[r] !== undefined && rows[r] > span0) r++; rows[r] = span1;
+        return {e:e, x0:x0, x1:x1, lx:lx, flip:flip, r:r};
+      });
+      var h = Math.max(1, rows.length)*rowH + lanePad*2;
+      lanes.push({t:t, y:y, h:h, placed:placed}); y += h;
+    });
+    var H = y + 8, s = [];
+    s.push('<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Roadmap of deadlines and decisions by track"><g font-family="var(--f-body)">');
+    // month grid
+    for (var m = new Date(start); m < end; m = new Date(m.getFullYear(), m.getMonth()+1, 1)) {
+      var mx = x(m), lab = m.toLocaleString("en-GB",{month:"short"}) + (m.getMonth()===0 || +m===+start ? " "+String(m.getFullYear()).slice(2) : "");
+      s.push('<line x1="'+mx+'" x2="'+mx+'" y1="'+(top-6)+'" y2="'+(H-8)+'" stroke="var(--rule-2)" stroke-width="1"/>');
+      s.push('<text x="'+(mx+4)+'" y="'+(top-12)+'" font-size="11" fill="var(--ink-3)" font-family="var(--f-mono)">'+lab+'</text>');
+    }
+    lanes.forEach(function(ln, i){
+      if (i>0) s.push('<line x1="0" x2="'+W+'" y1="'+ln.y+'" y2="'+ln.y+'" stroke="var(--rule)" stroke-width="1"/>');
+      s.push('<rect x="0" y="'+ln.y+'" width="'+(L-10)+'" height="'+ln.h+'" fill="var(--panel)"/>');
+      s.push('<rect x="4" y="'+(ln.y+lanePad+4)+'" width="9" height="9" rx="2" fill="var(--s-'+ln.t.id+')"/>');
+      s.push('<text x="20" y="'+(ln.y+lanePad+13)+'" font-size="12" font-weight="600" fill="var(--ink)">'+esc(ln.t.label)+'</text>');
+      ln.placed.forEach(function(p, k){
+        var e = p.e, cy = ln.y + lanePad + p.r*rowH + 11, col = "var(--s-"+ln.t.id+")";
+        var idx = D.events.indexOf(e);
+        s.push('<g class="mk" tabindex="0" data-i="'+idx+'" role="button" aria-label="'+esc(e.title+", "+fmt(e.date))+'">');
+        if (e.end) {
+          s.push('<rect x="'+p.x0+'" y="'+(cy+3)+'" width="'+Math.max(4,p.x1-p.x0)+'" height="6" rx="3" fill="'+col+'" fill-opacity="'+(e.est?0.35:0.6)+'" stroke="'+col+'" stroke-width="1"'+(e.est?' stroke-dasharray="3 2"':'')+'/>');
+          s.push('<text x="'+(p.x0+2)+'" y="'+(cy)+'" font-size="11" fill="var(--ink-2)">'+esc(e.title)+(e.est?' ·EST':'')+'</text>');
+          s.push('<rect class="hit" x="'+p.x0+'" y="'+(cy-11)+'" width="'+Math.max(30,p.x1-p.x0)+'" height="26" fill="transparent"/>');
+        } else {
+          var fill = e.est ? "var(--panel)" : col, dash = e.est ? ' stroke-dasharray="2 1.5"' : '';
+          if (e.kind==="deadline") s.push('<path d="M'+p.x0+' '+(cy-6)+' L'+(p.x0+6)+' '+cy+' L'+p.x0+' '+(cy+6)+' L'+(p.x0-6)+' '+cy+' Z" fill="'+fill+'" stroke="'+col+'" stroke-width="2"'+dash+'/>');
+          else if (e.kind==="decision") s.push('<circle cx="'+p.x0+'" cy="'+cy+'" r="5.5" fill="'+fill+'" stroke="'+col+'" stroke-width="2"'+dash+'/>');
+          else s.push('<rect x="'+(p.x0-4.5)+'" y="'+(cy-4.5)+'" width="9" height="9" rx="1.5" fill="'+fill+'" stroke="'+col+'" stroke-width="2"'+dash+'/>');
+          s.push('<text x="'+p.lx+'" y="'+(cy+4)+'" font-size="11" fill="var(--ink-2)"'+(p.flip?' text-anchor="end"':'')+'>'+esc(e.title)+(e.est?' ·EST':'')+'</text>');
+          s.push('<rect class="hit" x="'+(p.x0-10)+'" y="'+(cy-10)+'" width="20" height="20" fill="transparent"/>');
+        }
+        s.push('</g>');
+      });
+    });
+    if (TODAY >= start && TODAY < end) {
+      var tx = x(TODAY);
+      s.push('<line x1="'+tx+'" x2="'+tx+'" y1="'+(top-4)+'" y2="'+(H-8)+'" stroke="var(--today)" stroke-width="2"/>');
+      s.push('<rect x="'+(tx-26)+'" y="2" width="52" height="16" rx="3" fill="var(--today)"/><text x="'+tx+'" y="14" text-anchor="middle" font-size="10" font-weight="600" fill="var(--panel)" font-family="var(--f-mono)">TODAY</text>');
+    }
+    s.push('</g></svg>');
+    box.innerHTML = s.join("");
+    box.appendChild(tip); tip.hidden = true;
+    function show(g){
+      var e = D.events[+g.getAttribute("data-i")], a = APP[e.app], n = days(e.date);
+      tip.innerHTML = '<b>'+esc(e.title)+'</b><span class="mono">'+fmt(e.date)+(e.end?' – '+fmt(e.end):'')+' · '+tm(n)+'</span>'+(e.est?'<br>Estimate / unverified date':'')+(a?'<br>'+esc(a.name)+'<br>Status: '+esc(D.statuses[a.status]):'');
+      tip.hidden = false;
+      var r = g.getBoundingClientRect(), b = box.getBoundingClientRect();
+      var left = r.left - b.left + box.scrollLeft + r.width/2 + 10, topp = r.top - b.top + r.height + 6;
+      if (left + 260 > box.scrollLeft + b.width) left = Math.max(box.scrollLeft + 4, r.left - b.left + box.scrollLeft - 270);
+      tip.style.left = left+"px"; tip.style.top = topp+"px";
+    }
+    box.querySelectorAll(".mk").forEach(function(g){
+      g.addEventListener("mouseenter", function(){ show(g); }); g.addEventListener("focus", function(){ show(g); });
+      g.addEventListener("click", function(){ show(g); });
+      g.addEventListener("mouseleave", function(){ tip.hidden = true; }); g.addEventListener("blur", function(){ tip.hidden = true; });
+    });
+    var lg = function(shape){ return '<svg width="14" height="14" viewBox="0 0 14 14">'+shape+'</svg>'; };
+    document.getElementById("tlLegend").innerHTML =
+      '<span>'+lg('<path d="M7 1 L13 7 L7 13 L1 7Z" fill="var(--ink-2)"/>')+'Deadline</span>'+
+      '<span>'+lg('<circle cx="7" cy="7" r="5.5" fill="var(--ink-2)"/>')+'Decision / result</span>'+
+      '<span>'+lg('<rect x="2" y="2" width="10" height="10" rx="1.5" fill="var(--ink-2)"/>')+'Milestone</span>'+
+      '<span>'+lg('<rect x="1" y="4" width="12" height="6" rx="3" fill="var(--ink-2)" fill-opacity=".6"/>')+'Period</span>'+
+      '<span>'+lg('<circle cx="7" cy="7" r="5" fill="var(--panel)" stroke="var(--ink-2)" stroke-width="2" stroke-dasharray="2 1.5"/>')+'Hollow, dashed, ·EST = estimate</span>'+
+      '<span>'+lg('<line x1="7" x2="7" y1="0" y2="14" stroke="var(--today)" stroke-width="2"/>')+'Today</span>'+
+      '<span class="muted">Tap or hover a mark for details. Scrolls sideways on phones.</span>';
+  }
+
+  function renderDynamic(){
+    document.querySelectorAll("#trackFilters button").forEach(function(b){ b.setAttribute("aria-pressed", b.getAttribute("data-t")===state.track ? "true" : "false"); });
+    renderUrgent(); renderTable(); renderTimeline();
+  }
+
+  function boot(){ renderStatic(); renderDynamic(); }
+  boot();
+  var rt; window.addEventListener("resize", function(){ clearTimeout(rt); rt = setTimeout(renderTimeline, 150); });
+})();
+</script>
+
+</body>
+</html>
